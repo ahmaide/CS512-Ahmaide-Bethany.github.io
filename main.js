@@ -1,0 +1,266 @@
+const canvas = document.getElementById("glCanvas");
+const gl = canvas.getContext("webgl2");
+if (!gl) alert("WebGL2 not supported.");
+
+const MATERIAL_DIFFUSE     = 0;
+const MATERIAL_REFLECTIVE  = 1;
+const MATERIAL_REFRACTIVE  = 2;
+const MATERIAL_EMISSIVE    = 3;
+const MATERIAL_CHESSBOARD  = 99;
+const MATERIAL_GLASS = 4;
+
+setupUI();
+
+// set up shader with ray tracing logic
+const program = createShaderProgram(gl, vertexShader, fragShader);
+const uBoardMinLoc  = gl.getUniformLocation(program, "u_boardMin");
+const uBoardSizeLoc = gl.getUniformLocation(program, "u_boardTileSize");
+
+gl.useProgram(program);
+gl.uniform2f(uBoardMinLoc, BOARD_MIN_X, BOARD_MIN_Z);
+gl.uniform1f(uBoardSizeLoc, BOARD_TILE_SIZE);
+
+// view/camera
+const camera = new RTView({
+    position: [0, 6, -10],
+    target:   [0, 0, 0]
+});
+
+function uploadCamera() {
+    camera.upload(gl, program);
+}
+
+const world = new RTWorld();
+
+const boardY = 0.001;
+// add plane for chessboard
+world.add(new RTPlane({
+    normal: [0, 1, 0],
+    d:       0.0,
+    color:  [1.0, 1.0, 1.0],
+    material: MATERIAL_CHESSBOARD
+}));
+
+const tileSize = BOARD_TILE_SIZE;
+const boardWidth  = 8 * tileSize;
+const boardDepth  = 8 * tileSize;
+
+const boardCenterX = BOARD_MIN_X + boardWidth / 2;
+const boardCenterZ = BOARD_MIN_Z + boardDepth / 2;
+
+const baseHeight = 0.8;   // thickness of wood under the board
+const baseColor  = [0.45, 0.28, 0.15];
+
+world.add(new RTCube({
+    center: [boardCenterX, -baseHeight / 2 - 0.1, boardCenterZ],
+    size: [
+        boardWidth / 2 + 0.8,
+        baseHeight/2,
+        boardDepth / 2 + 0.8     
+    ],
+    color: baseColor,
+    material: MATERIAL_DIFFUSE
+}));
+
+king_parts = placePieces();
+
+let kingAngle = 0;
+let kingTargetAngle = Math.PI ;
+let kingFalling = false;
+
+
+function uploadWorld() {
+    world.upload(gl, program);
+}
+
+
+const quadVAO = gl.createVertexArray();
+gl.bindVertexArray(quadVAO);
+
+const quadBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+        -1, -1,
+         3, -1,
+        -1,  3
+    ]),
+    gl.STATIC_DRAW
+);
+
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+
+// function animateWorld(timeSeconds) {
+//     const t = timeSeconds;
+
+//     for (let i = 0; i < world.cubes.length; i++) {
+//         world.cubes[i].rotation = t * 0.6; 
+//     }
+// }
+
+function switchCameraView(duration = 1000) {
+    const startPos = camera.position.slice();
+
+    const endPos = [
+        camera.position[0],
+        camera.position[1],
+        2 * boardCenterZ - camera.position[2]
+    ];
+
+    const startTime = performance.now();
+
+    function animate() {
+        const now = performance.now();
+        const t = Math.min(1, (now - startTime) / duration);
+
+        const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+
+        camera.position[0] = startPos[0] + (endPos[0] - startPos[0]) * ease;
+        camera.position[1] = startPos[1] + (endPos[1] - startPos[1]) * ease;
+        camera.position[2] = startPos[2] + (endPos[2] - startPos[2]) * ease;
+
+        camera.target = [boardCenterX, 0, boardCenterZ];
+
+        camera._updateBasis();
+
+        uploadCamera();
+
+        if (t < 1) requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+
+
+function startKingFallLeft() {
+    if (kingFalling) return;  // avoid double-trigger
+    kingFalling = true;
+}
+
+let king_original_offsets = null;
+
+function rotateKingLeft(parts, angle) {
+    if (!parts || parts.length === 0) return;
+
+    const base = parts[0];
+
+    if (!king_original_offsets) {
+        king_original_offsets = parts.map(p => ({
+            dx: p.center[0] - base.center[0],
+            dy: p.center[1] - base.center[1],
+            dz: p.center[2] - base.center[2]
+        }));
+    }
+
+    const pivot = {
+        x: base.center[0] - base.size[0], 
+        y: base.center[1] - base.size[1],  
+        z: base.center[2] 
+    };
+
+    const s = Math.sin(angle);
+    const c = Math.cos(angle);
+
+    for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const o = king_original_offsets[i];
+
+        const dx = (base.center[0] + o.dx) - pivot.x;
+        const dy = (base.center[1] + o.dy) - pivot.y;
+        const dz = (base.center[2] + o.dz) - pivot.z;
+
+        //Rotate around X-axis
+        const nx = dx; 
+        const ny = dy * c - dz * s;
+        const nz = dy * s + dz * c;
+
+        p.center[0] = pivot.x + nx;
+        p.center[1] = pivot.y + ny;
+        p.center[2] = pivot.z + nz;
+
+        //Update the 3x3 rotation matrix for the ray-tracer's intersectCube function
+        if (p.size && p.rotation) {
+            p.rotation = [
+                1,  0,   0,
+                0,  c,  -s,
+                0,  s,   c
+            ];
+        }
+    }
+}
+
+
+function render(time) {
+    gl.useProgram(program);
+
+    
+    gl.uniform1f(gl.getUniformLocation(program, "u_time"), time * 0.001);
+
+    gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
+    gl.uniform1f(gl.getUniformLocation(program, "u_lightIntensity"), params.lightIntensity);
+    gl.uniform1f(gl.getUniformLocation(program, "u_ambientStrength"), params.ambientStrength);
+    gl.uniform1f(gl.getUniformLocation(program, "u_reflectionStrength"), params.reflectionStrength);
+    gl.uniform3f(
+        gl.getUniformLocation(program, "u_objectColor"),
+        params.colorR,
+        params.colorG,
+        params.colorB
+    );
+    gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
+
+    uploadCamera();
+    rotateKingLeft(king_parts, kingAngle);
+    uploadWorld();
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    requestAnimationFrame(render);
+}
+
+
+
+requestAnimationFrame(render);
+
+function fallKingLeft() {
+    if (kingFalling || kingAngle >= kingTargetAngle) return; 
+    
+    kingFalling = true;
+
+    let start = performance.now();
+    const DURATION_MS = 500; 
+    
+    const startAngle = kingAngle; 
+
+    function animate() {
+        let now = performance.now();
+        let t = (now - start) / DURATION_MS;
+        
+        if (t > 1) t = 1;
+
+        kingAngle = startAngle + (kingTargetAngle - startAngle) * t;
+
+        if (t < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            kingAngle = kingTargetAngle;
+            kingFalling = false;
+        }
+    }
+    animate();
+}
+
+
+window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+        switchCameraView();
+    }
+});
+
+window.addEventListener("keydown", e => {
+    if (e.key === "k" || e.key === "K") {
+        fallKingLeft();
+    }
+});
