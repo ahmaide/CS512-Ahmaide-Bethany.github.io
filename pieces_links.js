@@ -19,6 +19,8 @@ const PIECE_ASSETS = {
 
 let selectedSquare = null;
 
+let flipped = false;
+
 const BOARD_LAYOUT = [
     ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'], 
     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], 
@@ -127,7 +129,7 @@ function updateBoardPieces() {
                 const pieceCode = layout_2D[7-row][7-col];
             
                 if (pieceCode !== '') {
-                    const colorKey = (pieceCode === pieceCode.toUpperCase()) ? 'b' : 'w';
+                    const colorKey = (pieceCode === pieceCode.toUpperCase()) ? 'w' : 'b';
                     const typeKey  = pieceCode.toLowerCase();
                     
                     if (PIECE_ASSETS[colorKey] && PIECE_ASSETS[colorKey][typeKey]) {
@@ -171,12 +173,30 @@ function highlightSquare(col, row) {
 }
 
 function onSquareClick(col, row) {
+    removeHighlight3D();
+    if(!flipped)
+        highlightSquare3D(7-col, 7-row);
+    else
+        highlightSquare3D(col, row);
     highlightSquare(col, row);
     const piece = BOARD_LAYOUT[row][col];
 }
 
 
 function flip_board(){
+    flipped = !flipped;
+    removeHighlight3D();
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+    const grid = container.lastElementChild;
+    const squares = grid.children;
+    if (selectedSquare) {
+        const oldIndex = selectedSquare.row * 8 + selectedSquare.col;
+        if (squares[oldIndex]) {
+            squares[oldIndex].style.backgroundColor = getDefaultSquareColor(selectedSquare.col, selectedSquare.row);
+        }
+    }
+    
     for(let i=0 ; i<4 ; i++){
         for(let j =0 ; j<8 ; j++){
             let temp = layout_2D[i][j];

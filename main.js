@@ -594,6 +594,40 @@ function movePieceDiagonal(parts, steps, dirX, dirZ) {
     animate();
 }
 
+let highlightCube = null;
+
+function highlightSquare3D(col, row) {
+
+    const centerX = BOARD_MIN_X + (col + 0.5) * BOARD_TILE_SIZE;
+    const centerZ = BOARD_MIN_Z + (row + 0.5) * BOARD_TILE_SIZE;
+    
+
+    const halfTile = BOARD_TILE_SIZE / 2;
+    const thickness = 0.01; // Very thin
+    
+    if (!highlightCube) {
+
+        highlightCube = new RTCube({
+            center: [centerX, 0.01, centerZ], 
+            size:   [halfTile, thickness, halfTile],
+            color:  [1.0, 0, 0], // Grey color
+            material: MATERIAL_DIFFUSE 
+        });
+        
+
+        world.add(highlightCube);
+    } else {
+        highlightCube.center = [centerX, 0.01, centerZ];
+    }
+    uploadWorld();
+}
+
+function removeHighlight3D() {
+    if (highlightCube) {
+        highlightCube.center = [1000, -1000, 1000]; 
+        uploadWorld();
+    }
+}
 
 
 window.addEventListener("keydown", (e) => {
@@ -629,6 +663,7 @@ window.addEventListener("keydown", (e) => {
         movePieceDiagonal(king_parts, 3, 1, -1);
     }
 });
+
 
 window.addEventListener("load", function() {
     if (typeof setupUI === "function") setupUI();
