@@ -34,6 +34,9 @@ uniform float u_fov;
 uniform vec2  u_boardMin;
 uniform float u_boardTileSize;
 
+// Video Elements
+uniform sampler2D u_videoTexture;
+const int MATERIAL_VIDEO = 5;
 
 //  Ray structure
 struct Ray {
@@ -89,6 +92,7 @@ struct HitData {
     vec3 point;
     vec3 normal;
     vec3 color;
+    vec2 uv;
     int material;
     float reflectivity;
     float refractiveIndex;
@@ -373,6 +377,27 @@ HitData traceScene(Ray ray, bool includeLightSphere) {
             closest.refractiveIndex = u_cubes[i].refractiveIndex;
             closest.intensity       = u_cubes[i].intensity;
 
+            vec3 p = ray.origin - u_cubes[i].center;
+            vec3 ro = transpose(u_cubes[i].rotation) * p;
+            vec3 rd = transpose(u_cubes[i].rotation) * ray.direction;
+            vec3 localHit = ro + rd * t;
+
+            vec3 s = u_cubes[i].size;
+            vec3 dist = abs(localHit) - s;
+            vec2 uv = vec2(0.0);
+
+            if (dist.x > dist.y && dist.x > dist.z) {
+                uv = localHit.zy / s.zy; 
+            } 
+            else if (dist.y > dist.x && dist.y > dist.z) {
+                uv = localHit.xz / s.xz;
+            } 
+            else {
+                uv = localHit.xy / s.xy;
+            }
+
+            closest.uv = uv * 0.5 + 0.5;
+
         }
 
 
@@ -532,6 +557,17 @@ vec3 trace(Ray ray, int maxDepth) {
 
             
         }
+        else if (hit.material == MATERIAL_VIDEO) {
+            vec3 vidColor = texture(u_videoTexture, hit.uv).rgb;
+            
+            float NdotL = max(dot(hit.normal, lightDir), 0.0);
+            float attenuationFactor = 1.0 / (1.0 + 0.15 * lightDist * lightDist);
+            vec3 diffuse = vidColor * NdotL * (lightSphere.intensity * u_lightIntensity);
+            vec3 ambient = u_ambientStrength * vidColor;
+
+            color += attenuation * (diffuse + ambient);
+            break; 
+        }  
         else if (hit.material == MATERIAL_REFRACTIVE) {
             float cosTheta = clamp(dot(-ray.direction, hit.normal), 0.0, 1.0);
             float eta = hit.refractiveIndex;

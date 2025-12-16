@@ -11,6 +11,20 @@ const MATERIAL_GLASS = 4;
 
 setupUI();
 
+
+// Video Setup
+const video = document.getElementById("videoTexture");
+video.play().catch(e => console.error("Video play failed:", e));
+
+const videoTexture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+const MATERIAL_VIDEO = 5;
+
 // set up shader with ray tracing logic
 const program = createShaderProgram(gl, vertexShader, fragShader);
 const uBoardMinLoc  = gl.getUniformLocation(program, "u_boardMin");
@@ -58,8 +72,8 @@ world.add(new RTCube({
         baseHeight/2,
         boardDepth / 2 + 0.8     
     ],
-    color: baseColor,
-    material: MATERIAL_DIFFUSE
+    color: [1, 1, 1],
+    material: MATERIAL_VIDEO
 }));
 
 king_parts = placePieces();
@@ -309,8 +323,14 @@ function rotateKingFront(parts, angle, side) {
 function render(time) {
     gl.useProgram(program);
 
-    
-    gl.uniform1f(gl.getUniformLocation(program, "u_time"), time * 0.001);
+    if (video.readyState >= video.HAVE_CURRENT_DATA) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    }
+
+    gl.uniform1i(gl.getUniformLocation(program, "u_videoTexture"), 0);
+    gl.uniform1f(gl.getUniformLocation(program, "u_time"), time );
 
     gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
     gl.uniform1f(gl.getUniformLocation(program, "u_lightIntensity"), params.lightIntensity);
@@ -607,3 +627,13 @@ window.addEventListener("keydown", (e) => {
         movePieceDiagonal(king_parts, 3, 1, -1);
     }
 });
+
+function switchVideo(filename) {
+    const video = document.getElementById("videoTexture");
+    
+    video.src = filename;
+    
+    video.play().catch(e => console.error("Could not play video:", e));
+    
+    console.log("Switched texture to:", filename);
+}

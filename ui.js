@@ -10,16 +10,16 @@ const params = {
 
 function setupUI() {
     const bind = (id, key) => {
-        document.getElementById(id).addEventListener("input", e => {
-            params[key] = parseFloat(e.target.value);
-        });
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("input", e => {
+                params[key] = parseFloat(e.target.value);
+            });
+        }
     };
 
+    // Only bind the sliders that still exist
     bind("lightIntensity", "lightIntensity");
     bind("ambientStrength", "ambientStrength");
-    bind("reflectionStrength", "reflectionStrength");
-    bind("colorR", "colorR");
-    bind("colorG", "colorG");
-    bind("colorB", "colorB");
     bind("maxBounces", "maxBounces");
 }
