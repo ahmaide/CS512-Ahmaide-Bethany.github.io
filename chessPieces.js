@@ -314,7 +314,7 @@ function placePieces() {
     }
 
     // Rooks
-    addRook(0, 0, white);
+     addRook(0, 0, white);
     addRook(7, 0, white);
 
     addRook(0, 7, black);
@@ -323,14 +323,14 @@ function placePieces() {
     addKing(4, 0, white);
     addKing(3, 7, black);
 
-    king_parts = addQueen(3, 0, white);
+     addQueen(3, 0, white);
     addQueen(4, 7, black);
 
     addKnight(1, 0, white);
     addKnight(6, 0, white);
 
     
-    addKnight(1, 7, black);
+    king_parts = addKnight(1, 7, black);
     addKnight(6, 7, black);
 
     addBishop(2, 0, white);

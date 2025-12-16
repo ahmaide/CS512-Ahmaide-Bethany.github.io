@@ -533,26 +533,23 @@ vec3 trace(Ray ray, int maxDepth) {
             
         }
         else if (hit.material == MATERIAL_REFRACTIVE) {
-
             float cosTheta = clamp(dot(-ray.direction, hit.normal), 0.0, 1.0);
             float eta = hit.refractiveIndex;
             float k = 1.0 - eta * eta * (1.0 - cosTheta * cosTheta);
             bool total_internal_reflection = (k < 0.0);
-
             float schlick_value = schlick(cosTheta, eta);
-
             vec3 direction;
 
             if (total_internal_reflection || schlick_value > 0.5) {
-                //direction = reflection ray
                 direction = reflect(ray.direction, hit.normal);
-            } else {
-                //direction = refraction ray
+            } 
+            else {
                 direction = refraction(ray.direction, hit.normal, eta);
             }
 
             ray = Ray(hit.point + direction * 0.001, normalize(direction));
-            attenuation *= 0.98;
+
+            attenuation *= hit.color * 0.98; 
         }
         else if (hit.material == MATERIAL_REFLECTIVE){
             vec3 reflDir = reflect(ray.direction, hit.normal);

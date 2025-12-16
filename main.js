@@ -333,7 +333,33 @@ function render(time) {
     requestAnimationFrame(render);
 }
 
+let color_switched = false;
 
+function makeActivePartPurple() {
+    if (!king_parts || king_parts.length === 0) return;
+
+    color_switched = !color_switched;
+
+    const ghostPurple = [8.0, 8.0, 0.0]; 
+
+    for (let p of king_parts) {
+
+        if(!color_switched){
+            p.material = MATERIAL_GLASS;
+            p.color = [1, 1, 1];
+            p.refractiveIndex = 1.0; 
+            p.reflectivity = 1.5; 
+        }
+        else{
+            p.color = ghostPurple;
+            p.material = MATERIAL_REFRACTIVE;
+            p.refractiveIndex = 1.0; 
+            p.reflectivity = 1.2; 
+        }
+    }
+    
+    uploadWorld();
+}
 
 requestAnimationFrame(render);
 
@@ -375,5 +401,11 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keydown", e => {
     if (e.key === "k" || e.key === "K") {
         fallKingLeft();
+    }
+});
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === "c" || e.key === "C") {
+        makeActivePartPurple();
     }
 });
