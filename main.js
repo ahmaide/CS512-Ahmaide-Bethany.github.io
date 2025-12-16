@@ -142,7 +142,7 @@ function startKingFallLeft() {
 
 let king_original_offsets = null;
 
-function rotateKingLeft(parts, angle) {
+function rotateKingLeft(parts, angle, side) {
     if (!parts || parts.length === 0) return;
 
     const base = parts[0];
@@ -166,7 +166,7 @@ function rotateKingLeft(parts, angle) {
     }
 
     const pivot = {
-        x: base.center[0] - base.size[0], 
+        x: base.center[0] - side * base.size[0], 
         y: base.center[1] - base.size[1],  
         z: base.center[2] 
     };
@@ -183,8 +183,8 @@ function rotateKingLeft(parts, angle) {
         const dz = (base.center[2] + o.dz) - pivot.z;
 
         const nx = dx; 
-        const ny = dy * c + dz * s;
-        const nz = dy * s + dz * c;
+        const ny = dy * c + side * dz * s;
+        const nz = side * dy * s + dz * c;
 
         p.center[0] = pivot.x + nx;
         p.center[1] = pivot.y + ny;
@@ -216,8 +216,8 @@ function rotateKingLeft(parts, angle) {
         if (p.size && p.rotation) {
             p.rotation = [
                 1,  0,   0,
-                0,  c,  -s,
-                0,  s,   c
+                0,  c,  side * -s,
+                0,  side * s,   c
             ];
         }
     }
@@ -243,7 +243,7 @@ function render(time) {
     gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
 
     uploadCamera();
-    rotateKingLeft(king_parts, kingAngle);
+    rotateKingLeft(king_parts, kingAngle, -1);
     uploadWorld();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
