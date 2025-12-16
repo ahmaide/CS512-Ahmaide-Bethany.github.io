@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Chess Board</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         body { 
             margin: 0; 
@@ -45,6 +46,7 @@
             display: block;
             margin: 5px 0;
         }
+        
     </style>
 </head>
 <body>
@@ -73,11 +75,15 @@ Press "k" to see the king fall.</p>
     <div class="video-controls" style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
         <label style="margin-bottom: 5px;">Texture Video:</label>
         <div style="display: flex; gap: 5px;">
-            <button onclick="switchVideo('brown1.mp4')">1</button>
-            <button onclick="switchVideo('brown2.mp4')">2</button>
-            <button onclick="switchVideo('brown3.mp4')">3</button>
-            <button onclick="switchVideo('brown4.mp4')">4</button>
+            <button onclick="switchVideo('videos/brown1.mp4')">1</button>
+            <button onclick="switchVideo('videos/brown2.mp4')">2</button>
+            <button onclick="switchVideo('videos/brown3.mp4')">3</button>
+            <button onclick="switchVideo('videos/brown4.mp4')">4</button>
         </div>
+        <div style="margin-top: 20px; border-top: 1px solid #444; padding-top: 10px;">
+        <label style="margin-bottom: 10px; display:block;">2D Board View:</label>
+        <div id="chessBoard2D"></div>
+    </div>
     </div>
   </div>
   
@@ -95,8 +101,7 @@ Press "k" to see the king fall.</p>
     <script  src="./WebGL-Env/raytrace/shaders/rtVertexShader.js"></script>
     <script  src = "./chessboard.js"></script>
     <script  src = "./chessPieces.js"></script>
-    
-
+    <script src = "./pieces_links.js"></script>
     <script  src="./ui.js"></script>
     <script src = "./WebGL-Env/utils/transformations.js"></script>
     <video id="videoTexture" src="brown4.mp4" loop muted playsinline autoplay style="display:none;"></video>

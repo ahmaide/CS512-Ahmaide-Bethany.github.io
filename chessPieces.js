@@ -56,7 +56,7 @@ function addRook(col, row, color) {
     //center
     parts.push(new RTCube({
         center: [x, y+0.1, z],
-        size: [0.15, 0.5, 0.15],
+        size: [0.15, 0.5, 0.15  ],
         color,
         material: MATERIAL_GLASS,
         refractiveIndex: 8.0
@@ -320,10 +320,10 @@ function placePieces() {
     addRook(0, 7, black);
     addRook(7, 7, black);
 
-    addKing(4, 0, white);
+    addKing(3, 0, white);
     addKing(3, 7, black);
 
-     addQueen(3, 0, white);
+     addQueen(4, 0, white);
     addQueen(4, 7, black);
 
     addKnight(1, 0, white);

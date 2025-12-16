@@ -1,0 +1,188 @@
+const PIECE_ASSETS = {
+    b: { // Black Pieces
+        p: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Chess_pdt60.png", // Fixed Link
+        r: "https://upload.wikimedia.org/wikipedia/commons/a/a0/Chess_rdt60.png",
+        n: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_ndt60.png",
+        b: "https://upload.wikimedia.org/wikipedia/commons/8/81/Chess_bdt60.png",
+        q: "https://upload.wikimedia.org/wikipedia/commons/a/af/Chess_qdt60.png",
+        k: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Chess_kdt60.png"
+    },
+    w: { // White Pieces
+        p: "https://upload.wikimedia.org/wikipedia/commons/0/04/Chess_plt60.png",
+        r: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Chess_rlt60.png",
+        n: "https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_nlt60.png",
+        b: "https://upload.wikimedia.org/wikipedia/commons/9/9b/Chess_blt60.png",
+        q: "https://upload.wikimedia.org/wikipedia/commons/4/49/Chess_qlt60.png",
+        k: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Chess_klt60.png"
+    }
+};
+
+let selectedSquare = null;
+
+const BOARD_LAYOUT = [
+    ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'], 
+    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], 
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+    ['r', 'n', 'b', 'k', 'q', 'b', 'n', 'r']  
+];
+
+const layout_2D = [
+    ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'], 
+    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], 
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['',  '',  '',  '',  '',  '',  '',  ''],   
+    ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+    ['r', 'n', 'b', 'k', 'q', 'b', 'n', 'r']  
+];
+
+
+
+function create2DBoard() {
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+
+    container.innerHTML = "";
+    container.style.position = "relative"; 
+    container.style.width = "500px";
+    container.style.height = "500px";
+
+
+    const grid = document.createElement("div");
+    grid.style.position = "absolute";
+    grid.style.inset = "0";
+    grid.style.zIndex = "1";
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(8, 1fr)";
+    grid.style.gridTemplateRows = "repeat(8, 1fr)";
+
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = document.createElement("div");
+            square.addEventListener("click", () => {
+                onSquareClick(col, row);
+            });
+            square.style.display = "flex";
+            square.style.alignItems = "center";
+            square.style.justifyContent = "center";
+            square.style.cursor = "pointer"; 
+            if ((row + col) % 2 === 0) {
+                square.style.backgroundColor = "rgba(238, 238, 210, 0.6)"; 
+            } else {
+                square.style.backgroundColor = "rgba(118, 150, 86, 0.6)"; 
+            }
+            if (BOARD_LAYOUT[7-row] && BOARD_LAYOUT[7-row][7-col]) {
+                const pieceCode = BOARD_LAYOUT[7-row][7-col];
+                
+                if (pieceCode !== '') {
+                    const colorKey = (pieceCode === pieceCode.toUpperCase()) ? 'w' : 'b';
+                    const typeKey  = pieceCode.toLowerCase();
+                    
+                    if (PIECE_ASSETS[colorKey] && PIECE_ASSETS[colorKey][typeKey]) {
+                        const img = document.createElement("img");
+                        img.src = PIECE_ASSETS[colorKey][typeKey];
+                        
+                        img.style.width = "100%";
+                        img.style.height = "100%";
+                        img.style.objectFit = "contain";
+                        img.style.pointerEvents = "none";
+                        
+                        square.appendChild(img);
+                    }
+                }
+            }
+            grid.appendChild(square);
+        }
+    }
+    container.appendChild(grid);
+}
+
+
+function updateBoardPieces() {
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+
+    const grid = container.lastElementChild; 
+
+    if (!grid || grid.children.length !== 64) {
+        console.warn("Grid not found or invalid. Recreating board...");
+        create2DBoard(); 
+        return;
+    }
+
+    const squares = grid.children;
+
+    for (let row = 0; row <8 ; row++) {
+        for (let col = 0; col < 8; col++) {
+            const index = row * 8 + col;
+            const square = squares[index];
+            square.innerHTML = ""; 
+            if (layout_2D[7-row] && layout_2D[7-row][7-col]) {
+                const pieceCode = layout_2D[7-row][7-col];
+            
+                if (pieceCode !== '') {
+                    const colorKey = (pieceCode === pieceCode.toUpperCase()) ? 'b' : 'w';
+                    const typeKey  = pieceCode.toLowerCase();
+                    
+                    if (PIECE_ASSETS[colorKey] && PIECE_ASSETS[colorKey][typeKey]) {
+                        const img = document.createElement("img");
+                        img.src = PIECE_ASSETS[colorKey][typeKey];
+                        
+                        img.style.width = "100%";
+                        img.style.height = "100%";
+                        img.style.objectFit = "contain";
+                        img.style.pointerEvents = "none";
+                        
+                        square.appendChild(img);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function getDefaultSquareColor(col, row) {
+    const isEven = (col + row) % 2 === 0;
+    return isEven ? "rgba(238, 238, 210, 0.6)" : "rgba(118, 150, 86, 0.6)";
+}
+
+function highlightSquare(col, row) {
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+    const grid = container.lastElementChild;
+    const squares = grid.children;
+    if (selectedSquare) {
+        const oldIndex = selectedSquare.row * 8 + selectedSquare.col;
+        if (squares[oldIndex]) {
+            squares[oldIndex].style.backgroundColor = getDefaultSquareColor(selectedSquare.col, selectedSquare.row);
+        }
+    }
+    const newIndex = row * 8 + col;
+    if (squares[newIndex]) {
+        squares[newIndex].style.backgroundColor = "rgba(255, 255, 0, 0.6)";
+    }
+    selectedSquare = { col, row };
+}
+
+function onSquareClick(col, row) {
+    highlightSquare(col, row);
+    const piece = BOARD_LAYOUT[row][col];
+}
+
+
+function flip_board(){
+    for(let i=0 ; i<4 ; i++){
+        for(let j =0 ; j<8 ; j++){
+            let temp = layout_2D[i][j];
+            layout_2D[i][j] = layout_2D[7-i][7-j];
+            layout_2D[7-i][7-j] = temp;
+        }
+    }
+    updateBoardPieces();
+}

@@ -1,0 +1,33 @@
+#chessBoard2D {
+    width: 500px;
+    height: 500px;
+    display: grid;
+    border: 5px solid #333;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    border: 2px solid #555;
+}
+
+.board-square {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px; 
+}
+
+.board-square.light {
+    background-color: #eeeed2;
+}
+
+.board-square.dark {
+    background-color: #769656;
+}
+
+.chess-piece-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}

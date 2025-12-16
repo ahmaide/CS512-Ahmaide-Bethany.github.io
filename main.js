@@ -72,7 +72,7 @@ world.add(new RTCube({
         baseHeight/2,
         boardDepth / 2 + 0.8     
     ],
-    color: [1, 1, 1],
+    color: baseColor,
     material: MATERIAL_VIDEO
 }));
 
@@ -595,9 +595,11 @@ function movePieceDiagonal(parts, steps, dirX, dirZ) {
 }
 
 
+
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         switchCameraView();
+        flip_board();
     }
 });
 
@@ -626,6 +628,13 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "d" || e.key === "D") {
         movePieceDiagonal(king_parts, 3, 1, -1);
     }
+});
+
+window.addEventListener("load", function() {
+    if (typeof setupUI === "function") setupUI();
+
+    create2DBoard(); 
+
 });
 
 function switchVideo(filename) {
