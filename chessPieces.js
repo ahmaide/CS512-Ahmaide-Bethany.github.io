@@ -10,12 +10,13 @@ function boardToWorld(col, row) {
 }
 
 function addPawn(col, row, color) {
+    const parts = [];
     let pos = boardToWorld(col, row);
     const x = pos.x;
     const z = pos.z;
     const y = 0.0;
 
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y, z],
         size: [0.15, 0.25, 0.15],
         color,
@@ -23,23 +24,28 @@ function addPawn(col, row, color) {
         refractiveIndex: 5.0
     }));
 
-    world.add(new RTSphere({
+    parts.push(new RTSphere({
         center: [x, y + 0.3, z],
         radius: 0.15,
         color,
         material: MATERIAL_GLASS,
         refractiveIndex: 1.5
     }));
+
+    for (let p of parts) world.add(p);
+
+    return parts;
 }
 
 function addRook(col, row, color) {
+    const parts = [];
     let pos = boardToWorld(col, row);
     const x = pos.x;
     const z = pos.z;
     const y = 0.0;
 
     //base
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y, z],
         size: [0.25, 0.1, 0.25],
         color,
@@ -48,7 +54,7 @@ function addRook(col, row, color) {
     }));
 
     //center
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y+0.1, z],
         size: [0.15, 0.5, 0.15],
         color,
@@ -57,24 +63,28 @@ function addRook(col, row, color) {
     }));
 
     // top
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y+0.6, z],
         size: [0.2, 0.1, 0.2],
         color,
         material: MATERIAL_GLASS,  
         refractiveIndex: 1.5  
     }));
+    for (let p of parts) world.add(p);
+
+    return parts;
 
 }
 
 function addKnight(col, row, color) {
+    const parts = [];
     let pos = boardToWorld(col, row);
     const x = pos.x;
     const z = pos.z;
     const y = 0.0;
     
 
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y + 0.05, z],
         size: [0.3, 0.05, 0.3],
         color,
@@ -86,7 +96,7 @@ function addKnight(col, row, color) {
     const neckThickness = 0.15;
     const tiltAngle = Math.PI / 6; 
 
-    world.add(new RTCube({
+    parts.push(new RTCube({
 
         center: [x, y + 0.45, z + 0.15],
         size: [neckThickness, neckLength / 2, neckThickness / 2],
@@ -99,7 +109,7 @@ function addKnight(col, row, color) {
     const headY = y + 0.85;
     const headZ = z + 0.35;
     
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [headX, headY, headZ],
         size: [0.15, 0.15, 0.1],
         color,
@@ -108,7 +118,7 @@ function addKnight(col, row, color) {
     }));
 
 
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [headX, headY + 0.1, headZ + 0.05],
         size: [0.03, 0.08, 0.03],
         color,
@@ -116,23 +126,29 @@ function addKnight(col, row, color) {
         refractiveIndex: 1.5
     }));
 
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [headX, headY - 0.05, headZ - 0.05],
         size: [0.1, 0.05, 0.05],
         color,
         material: MATERIAL_GLASS,
         refractiveIndex: 1.5
     }));
+
+    for (let p of parts) world.add(p);
+
+    return parts;
 }
 
+
 function addBishop(col, row, color) {
+    const parts = [];
     let pos = boardToWorld(col, row);
     const x = pos.x;
     const z = pos.z;
     const y = 0.0;
 
     const BASE_HEIGHT = 0.05; 
-    world.add(new RTCube({
+    parts.push(new RTCube({
         center: [x, y + BASE_HEIGHT, z],
         size: [0.25, BASE_HEIGHT, 0.25], 
         color,
@@ -141,7 +157,7 @@ function addBishop(col, row, color) {
     }));
 
     const CONE_HEIGHT = 0.7; 
-    world.add(new RTCone({
+    parts.push(new RTCone({
         apex:    [x, y + BASE_HEIGHT * 2 + CONE_HEIGHT, z], 
         axis:    [0.0, -1.0, 0.0],
         height:  CONE_HEIGHT,
@@ -152,7 +168,7 @@ function addBishop(col, row, color) {
     }));
 
     const HEAD_RADIUS = 0.1;
-    world.add(new RTSphere({
+    parts.push(new RTSphere({
         center: [x, y + BASE_HEIGHT * 2 + CONE_HEIGHT - HEAD_RADIUS, z],
         radius: HEAD_RADIUS,
         color,
@@ -160,13 +176,17 @@ function addBishop(col, row, color) {
         refractiveIndex: 1.5
     }));
     
-    world.add(new RTSphere({
+    parts.push(new RTSphere({
         center: [x, y + 0.8, z],
         radius: 0.06,
         color,
         material: MATERIAL_GLASS,
         refractiveIndex: 1.5
     }));
+
+    for (let p of parts) world.add(p);
+
+    return parts;
 }
 
 function addKing(col, row, color) {
@@ -285,6 +305,7 @@ function placePieces() {
     // Pawns
     for (let c = 0; c < 8; c++) {
         addPawn(c, 1, white);
+        
     }
 
     for (let c = 0; c < 8; c++) {
@@ -298,7 +319,7 @@ function placePieces() {
     addRook(0, 7, black);
     addRook(7, 7, black);
 
-    king_parts = addKing(4, 0, white);
+    addKing(4, 0, white);
     addKing(3, 7, black);
 
     addQueen(3, 0, white);
@@ -311,7 +332,7 @@ function placePieces() {
     addKnight(1, 7, black);
     addKnight(6, 7, black);
 
-    addBishop(2, 0, white);
+    king_parts = addBishop(2, 0, white);
     addBishop(5, 0, white);
 
     

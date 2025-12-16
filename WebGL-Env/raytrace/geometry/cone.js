@@ -1,13 +1,15 @@
 class RTCone {
     constructor({
-        apex           = [0, 0.5, 0],
+        center         = [0, 0, 0],
         axis           = [0, -1, 0],
         height         = 1.0,
+        apex           = [0, 1.0, 0],
         radius         = 1.0,
         color          = [1, 1, 1],
         material       = MATERIAL_DIFFUSE,
         reflectivity   = 0.0,
-        refractiveIndex = 1.0
+        refractiveIndex = 1.0,
+        rotation       = 0.0,
     } = {}) {
         this.apex           = apex;
         this.axis           = axis;
@@ -17,9 +19,14 @@ class RTCone {
         this.material       = material;
         this.reflectivity   = reflectivity;
         this.refractiveIndex = refractiveIndex;
+        this.center         = center;
+        this.rotation = rotation;
     }
 
     upload(gl, program, index) {
+
+        
+        gl.uniform3fv(gl.getUniformLocation(program, `u_cones[${index}].center`),   this.center);
         gl.uniform3fv(gl.getUniformLocation(program, `u_cones[${index}].apex`),   this.apex);
         gl.uniform3fv(gl.getUniformLocation(program, `u_cones[${index}].axis`),   this.axis);
         gl.uniform1f (gl.getUniformLocation(program, `u_cones[${index}].height`), this.height);
