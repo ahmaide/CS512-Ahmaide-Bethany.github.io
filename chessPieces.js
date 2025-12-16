@@ -330,10 +330,10 @@ function placePieces() {
     addKnight(6, 0, white);
 
     
-    king_parts = addKnight(1, 7, black);
+    addKnight(1, 7, black);
     addKnight(6, 7, black);
 
-    addBishop(2, 0, white);
+    king_parts = addBishop(2, 0, white);
     addBishop(5, 0, white);
 
     

@@ -196,8 +196,8 @@ function rotateKingLeft(parts, angle, side) {
             const adz = (base.center[2] + o.adz) - pivot.z;
 
             const nax = adx;
-            const nay = ady * c + adz * s;
-            const naz = ady * s + adz * c;
+            const nay = ady * c + side * adz * s;
+            const naz = side * ady * s + adz * c;
 
             p.apex[0] = pivot.x + nax;
             p.apex[1] = pivot.y + nay;
@@ -208,8 +208,8 @@ function rotateKingLeft(parts, angle, side) {
             const az = o.axis[2];
 
             p.axis[0] = ax;
-            p.axis[1] = ay * c + az * s; 
-            p.axis[2] = ay * s + az * c; 
+            p.axis[1] = ay * c + side * az * s; 
+            p.axis[2] = side * ay * s + az * c; 
         }
 
 
@@ -277,9 +277,9 @@ function rotateKingFront(parts, angle, side) {
             const ady = (base.center[1] + o.ady) - pivot.y;
             const adz = (base.center[2] + o.adz) - pivot.z;
 
-            const nax = adx;
-            const nay = ady * c + adz * s;
-            const naz = ady * s + adz * c;
+            const naz = adz;
+            const nay = ady * c + side * adx * s;
+            const nax = side * ady * s + adx * c;
 
             p.apex[0] = pivot.x + nax;
             p.apex[1] = pivot.y + nay;
@@ -289,9 +289,9 @@ function rotateKingFront(parts, angle, side) {
             const ay = o.axis[1];
             const az = o.axis[2];
 
-            p.axis[0] = ax;
-            p.axis[1] = ay * c + az * s; 
-            p.axis[2] = ay * s + az * c; 
+            p.axis[2] = az;
+            p.axis[1] = ay * c + side* ax * s; 
+            p.axis[0] = side * ay * s + ax * c; 
         }
 
 
@@ -325,7 +325,7 @@ function render(time) {
     gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
 
     uploadCamera();
-    rotateKingFront(king_parts, kingAngle, 1);
+    rotateKingFront(king_parts, kingAngle, -1);
     uploadWorld();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -392,6 +392,189 @@ function fallKingLeft() {
 }
 
 
+function movePiece(parts, targetCol, targetRow) {
+    if (!parts || parts.length === 0) return;
+
+
+    const base = parts[0]; 
+    const startX = base.center[0];
+    const startZ = base.center[2];
+    const startY = base.center[1];
+
+
+    const targetPos = boardToWorld(targetCol, targetRow);
+    const endX = targetPos.x;
+    const endZ = targetPos.z;
+    const liftHeight = 2.0; 
+
+
+    const initialOffsets = parts.map(p => ({
+        cx: p.center[0], cy: p.center[1], cz: p.center[2],
+        ax: p.apex ? p.apex[0] : 0, 
+        ay: p.apex ? p.apex[1] : 0,
+        az: p.apex ? p.apex[2] : 0
+    }));
+
+    const startTime = performance.now();
+    const duration = 2000;
+
+    function animate() {
+        const now = performance.now();
+        let t = (now - startTime) / duration;
+
+        if (t > 1.0) t = 1.0;
+
+        let curX = startX;
+        let curY = startY;
+        let curZ = startZ;
+
+
+        if (t < 0.25) {
+            const phase = t / 0.25; 
+            curY = startY + (liftHeight * phase);
+        } 
+
+        else if (t < 0.50) {
+            curY = startY + liftHeight; 
+            const phase = (t - 0.25) / 0.25;
+            curX = startX + (endX - startX) * phase;
+        } 
+
+        else if (t < 0.75) {
+            curY = startY + liftHeight; 
+            curX = endX;
+            const phase = (t - 0.50) / 0.25;
+            curZ = startZ + (endZ - startZ) * phase;
+        } 
+
+        else {
+            curX = endX;
+            curZ = endZ;
+            const phase = (t - 0.75) / 0.25;
+            curY = (startY + liftHeight) - (liftHeight * phase);
+        }
+
+        const dx = curX - startX;
+        const dy = curY - startY;
+        const dz = curZ - startZ;
+
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i];
+            const init = initialOffsets[i];
+
+            p.center[0] = init.cx + dx;
+            p.center[1] = init.cy + dy;
+            p.center[2] = init.cz + dz;
+
+
+            if (p.apex) {
+                p.apex[0] = init.ax + dx;
+                p.apex[1] = init.ay + dy;
+                p.apex[2] = init.az + dz;
+            }
+        }
+
+        uploadWorld(); 
+
+        if (t < 1.0) {
+            requestAnimationFrame(animate);
+        }
+    }
+
+    animate();
+}
+
+
+function movePieceDiagonal(parts, steps, dirX, dirZ) {
+    if (!parts || parts.length === 0) return;
+
+    const base = parts[0];
+    const startX = base.center[0];
+    const startY = base.center[1];
+    const startZ = base.center[2];
+
+    const currentCol = Math.floor((startX - BOARD_MIN_X) / BOARD_TILE_SIZE);
+    const currentRow = Math.floor((startZ - BOARD_MIN_Z) / BOARD_TILE_SIZE);
+
+    const targetCol = currentCol + (steps * dirX);
+    const targetRow = currentRow + (steps * dirZ);
+
+    if (targetCol < 0 || targetCol > 7 || targetRow < 0 || targetRow > 7) {
+        console.log("Move out of bounds! Canceling.");
+        return;
+    }
+
+    const targetPos = boardToWorld(targetCol, targetRow);
+    const endX = targetPos.x;
+    const endZ = targetPos.z;
+    const liftHeight = 2.0;
+
+    const initialOffsets = parts.map(p => ({
+        cx: p.center[0], cy: p.center[1], cz: p.center[2],
+        ax: p.apex ? p.apex[0] : 0, 
+        ay: p.apex ? p.apex[1] : 0,
+        az: p.apex ? p.apex[2] : 0
+    }));
+
+    const startTime = performance.now();
+    const duration = 1500;
+
+    function animate() {
+        const now = performance.now();
+        let t = (now - startTime) / duration;
+        if (t > 1.0) t = 1.0;
+
+        let curX = startX;
+        let curY = startY;
+        let curZ = startZ;
+
+        if (t < 0.25) {
+            const phase = t / 0.25;
+            curY = startY + (liftHeight * phase);
+        } 
+
+        else if (t < 0.75) {
+            curY = startY + liftHeight; 
+            const phase = (t - 0.25) / 0.50; 
+            curX = startX + (endX - startX) * phase;
+            curZ = startZ + (endZ - startZ) * phase;
+        } 
+
+        else {
+            curX = endX;
+            curZ = endZ;
+            const phase = (t - 0.75) / 0.25;
+            curY = (startY + liftHeight) - (liftHeight * phase);
+        }
+
+        const dx = curX - startX;
+        const dy = curY - startY;
+        const dz = curZ - startZ;
+
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i];
+            const init = initialOffsets[i];
+
+            p.center[0] = init.cx + dx;
+            p.center[1] = init.cy + dy;
+            p.center[2] = init.cz + dz;
+
+            if (p.apex) {
+                p.apex[0] = init.ax + dx;
+                p.apex[1] = init.ay + dy;
+                p.apex[2] = init.az + dz;
+            }
+        }
+
+        uploadWorld();
+
+        if (t < 1.0) requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+
+
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         switchCameraView();
@@ -407,5 +590,20 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keydown", (e) => {
     if (e.key === "c" || e.key === "C") {
         makeActivePartPurple();
+    }
+});
+
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === "m" || e.key === "M") {
+        movePiece(king_parts, 3, 3);
+    }
+});
+
+
+window.addEventListener("keydown", (e) => {
+
+    if (e.key === "d" || e.key === "D") {
+        movePieceDiagonal(king_parts, 3, 1, -1);
     }
 });
