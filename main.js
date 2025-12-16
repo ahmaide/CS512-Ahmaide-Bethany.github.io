@@ -224,6 +224,88 @@ function rotateKingLeft(parts, angle, side) {
 } 
 
 
+function rotateKingFront(parts, angle, side) {
+    if (!parts || parts.length === 0) return;
+
+    const base = parts[0];
+
+    if (!king_original_offsets) {
+        king_original_offsets = parts.map(p => {
+            const data = {
+                dx: p.center[0] - base.center[0],
+                dy: p.center[1] - base.center[1],
+                dz: p.center[2] - base.center[2]
+            };
+
+            if (p.apex) {
+                data.adx = p.apex[0] - base.center[0]; 
+                data.ady = p.apex[1] - base.center[1];
+                data.adz = p.apex[2] - base.center[2];
+                data.axis = [...p.axis];
+            }
+            return data;
+        });
+    }
+
+    const pivot = {
+        x: base.center[0], 
+        y: base.center[1] - base.size[1],  
+        z: base.center[2] - side * base.size[2]
+    };
+
+    const s = Math.sin(angle);
+    const c = Math.cos(angle);
+
+    for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const o = king_original_offsets[i];
+
+        const dx = (base.center[0] + o.dx) - pivot.x;
+        const dy = (base.center[1] + o.dy) - pivot.y;
+        const dz = (base.center[2] + o.dz) - pivot.z;
+
+        const nx = side * dy * s + dx * c; 
+        const ny = dy * c + side * dx * s;
+        const nz = dz;
+
+        p.center[0] = pivot.x + nx;
+        p.center[1] = pivot.y + ny;
+        p.center[2] = pivot.z + nz;
+
+        if (p.apex && o.adx !== undefined) {
+            const adx = (base.center[0] + o.adx) - pivot.x;
+            const ady = (base.center[1] + o.ady) - pivot.y;
+            const adz = (base.center[2] + o.adz) - pivot.z;
+
+            const nax = adx;
+            const nay = ady * c + adz * s;
+            const naz = ady * s + adz * c;
+
+            p.apex[0] = pivot.x + nax;
+            p.apex[1] = pivot.y + nay;
+            p.apex[2] = pivot.z + naz;
+
+            const ax = o.axis[0];
+            const ay = o.axis[1];
+            const az = o.axis[2];
+
+            p.axis[0] = ax;
+            p.axis[1] = ay * c + az * s; 
+            p.axis[2] = ay * s + az * c; 
+        }
+
+
+        if (p.size && p.rotation) {
+            p.rotation = [
+                1,  0,   0,
+                0,  c,  side * -s,
+                0,  side * s,   c
+            ];
+        }
+    }
+} 
+
+
 function render(time) {
     gl.useProgram(program);
 
@@ -243,7 +325,7 @@ function render(time) {
     gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
 
     uploadCamera();
-    rotateKingLeft(king_parts, kingAngle, -1);
+    rotateKingFront(king_parts, kingAngle, 1);
     uploadWorld();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);

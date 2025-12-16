@@ -295,6 +295,7 @@ function addQueen(col, row, color) {
     }));
 
     for (let p of parts) world.add(p);
+    return parts;
 }
 
 
@@ -322,10 +323,10 @@ function placePieces() {
     addKing(4, 0, white);
     addKing(3, 7, black);
 
-    addQueen(3, 0, white);
+    king_parts = addQueen(3, 0, white);
     addQueen(4, 7, black);
 
-    king_parts = addKnight(1, 0, white);
+    addKnight(1, 0, white);
     addKnight(6, 0, white);
 
     
