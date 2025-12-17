@@ -603,14 +603,14 @@ function highlightSquare3D(col, row) {
     
 
     const halfTile = BOARD_TILE_SIZE / 2;
-    const thickness = 0.01; // Very thin
+    const thickness = 0.01; 
     
     if (!highlightCube) {
 
         highlightCube = new RTCube({
             center: [centerX, 0.01, centerZ], 
             size:   [halfTile, thickness, halfTile],
-            color:  [1.0, 0, 0], // Grey color
+            color:  [0.5, 0.5, 0.5], // Grey color
             material: MATERIAL_DIFFUSE 
         });
         

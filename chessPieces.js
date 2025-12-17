@@ -1,4 +1,5 @@
-let king_parts = []
+let board_data = []
+
 
 function boardToWorld(col, row) {
     // board tiles run from (0,0) to (8,8)
@@ -303,42 +304,49 @@ const white = [0.9, 0.9, 0.9];
 const black = [0.15, 0.15, 0.15];
 
 function placePieces() {
+
+    for (let row = 0; row < 8; row++) {
+        board_data[row] = []
+        for (let col = 0; col < 8; col++) {
+            board_data[row][col] = [];
+        }
+    }
     // Pawns
     for (let c = 0; c < 8; c++) {
-        addPawn(c, 1, white);
+        board_data [c][1] = addPawn(c, 1, white);
         
     }
 
     for (let c = 0; c < 8; c++) {
-        addPawn(c, 6, black);
+        board_data [c][6] = addPawn(c, 6, black);
     }
 
     // Rooks
-     addRook(0, 0, white);
-    addRook(7, 0, white);
+    board_data [0][0] = addRook(0, 0, white);
+    board_data [7][0] = addRook(7, 0, white);
 
-    addRook(0, 7, black);
-    addRook(7, 7, black);
+    board_data [0][7] = addRook(0, 7, black);
+    board_data [7][7] = addRook(7, 7, black);
 
-    addKing(3, 0, white);
-    addKing(3, 7, black);
+    board_data [3][0] = addKing(3, 0, white);
+    board_data [3][7] = addKing(3, 7, black);
 
-     addQueen(4, 0, white);
-    addQueen(4, 7, black);
+    board_data [4][0] = addQueen(4, 0, white);
+    board_data [4][7] = addQueen(4, 7, black);
 
-    addKnight(1, 0, white);
-    addKnight(6, 0, white);
-
-    
-    addKnight(1, 7, black);
-    addKnight(6, 7, black);
-
-    king_parts = addBishop(2, 0, white);
-    addBishop(5, 0, white);
+    board_data [1][0] = addKnight(1, 0, white);
+    board_data [6][0] = addKnight(6, 0, white);
 
     
-    addBishop(2, 7, black);
-    addBishop(5, 7, black);
+    board_data [1][7] = addKnight(1, 7, black);
+    board_data [6][7] = addKnight(6, 7, black);
 
-    return king_parts;
+    board_data [2][0] = addBishop(2, 0, white);
+    board_data [5][0] = addBishop(5, 0, white);
+
+    
+    board_data [2][7] = addBishop(2, 7, black);
+    board_data [5][7] = addBishop(5, 7, black);
+
+    return board_data[4][0];
 }

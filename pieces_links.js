@@ -1,6 +1,6 @@
 const PIECE_ASSETS = {
     b: { // Black Pieces
-        p: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Chess_pdt60.png", // Fixed Link
+        p: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Chess_pdt60.png",
         r: "https://upload.wikimedia.org/wikipedia/commons/a/a0/Chess_rdt60.png",
         n: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Chess_ndt60.png",
         b: "https://upload.wikimedia.org/wikipedia/commons/8/81/Chess_bdt60.png",
