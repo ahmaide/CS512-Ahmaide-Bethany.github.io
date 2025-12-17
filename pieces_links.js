@@ -70,7 +70,7 @@ function create2DBoard() {
         for (let col = 0; col < 8; col++) {
             const square = document.createElement("div");
             square.addEventListener("click", () => {
-                onSquareClick(col, row);
+                checkSquareCase(col, row);
             });
             square.style.display = "flex";
             square.style.alignItems = "center";
@@ -210,6 +210,20 @@ function clearDestinations(){
     }
     destinations = [];
     clearHighlights();
+}
+
+function checkSquareCase(col, row){
+     let type = layout_2D[row][col];
+     console.log(`Type is ${type}`);
+     if(type == '')
+        return;
+    if(destinations.some(sub => sub[0] === row && sub[1] === col))
+        return;
+    else{
+        if ((type != type.toUpperCase() && !flipped) || (type == type.toUpperCase() && flipped)){
+            onSquareClick(col, row);
+        }
+    }
 }
 
 function onSquareClick(col, row) {
