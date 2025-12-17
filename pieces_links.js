@@ -173,11 +173,11 @@ function highlightSquare(col, row) {
 }
 
 function onSquareClick(col, row) {
-    removeHighlight3D();
+    //removeHighlight3D();
     if(!flipped)
-        highlightSquare3D(7-col, 7-row);
+        show_selected_part_yellow(7-col, 7-row);
     else
-        highlightSquare3D(col, row);
+        show_selected_part_yellow(col, row);
     highlightSquare(col, row);
     const piece = BOARD_LAYOUT[row][col];
 }
@@ -185,7 +185,7 @@ function onSquareClick(col, row) {
 
 function flip_board(){
     flipped = !flipped;
-    removeHighlight3D();
+    //removeHighlight3D();
     const container = document.getElementById("chessBoard2D");
     if (!container) return;
     const grid = container.lastElementChild;

@@ -348,5 +348,5 @@ function placePieces() {
     board_data [2][7] = addBishop(2, 7, black);
     board_data [5][7] = addBishop(5, 7, black);
 
-    return board_data[4][0];
+    return board_data;
 }

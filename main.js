@@ -8,6 +8,7 @@ const MATERIAL_REFRACTIVE  = 2;
 const MATERIAL_EMISSIVE    = 3;
 const MATERIAL_CHESSBOARD  = 99;
 const MATERIAL_GLASS = 4;
+const TARGET_ANGLE = Math.PI;
 
 setupUI();
 
@@ -76,11 +77,12 @@ world.add(new RTCube({
     material: MATERIAL_VIDEO
 }));
 
-king_parts = placePieces();
+board_data = placePieces();
 
-let kingAngle = 0;
-let kingTargetAngle = Math.PI ;
-let kingFalling = false;
+let king_parts = board_data[4][0];
+
+let currentAngle = 0;
+let itemFalling = false;
 
 
 function uploadWorld() {
@@ -150,8 +152,8 @@ function switchCameraView(duration = 1000) {
 
 
 function startKingFallLeft() {
-    if (kingFalling) return;  // avoid double-trigger
-    kingFalling = true;
+    if (itemFalling) return;
+    itemFalling = true;
 }
 
 let king_original_offsets = null;
@@ -345,7 +347,7 @@ function render(time) {
     gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
 
     uploadCamera();
-    rotateKingFront(king_parts, kingAngle, -1);
+    rotateKingFront(king_parts, currentAngle, -1);
     uploadWorld();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -353,45 +355,61 @@ function render(time) {
     requestAnimationFrame(render);
 }
 
-let color_switched = false;
+let selected_parts = null;
+let previously_selected = null;
+let currentWhite = true;
 
-function makeActivePartPurple() {
-    if (!king_parts || king_parts.length === 0) return;
-
-    color_switched = !color_switched;
-
-    const ghostPurple = [8.0, 8.0, 0.0]; 
-
-    for (let p of king_parts) {
-
-        if(!color_switched){
+function show_selected_part_yellow(row, col) {
+    if (previously_selected) {
+        for (let p of previously_selected) {
             p.material = MATERIAL_GLASS;
-            p.color = [1, 1, 1];
+            
+            if (wasLastPieceWhite) {
+                p.color = [0.9, 0.9, 0.9]; 
+            } else {
+                p.color = [0.15, 0.15, 0.15]; 
+            }
+            
             p.refractiveIndex = 1.0; 
             p.reflectivity = 1.5; 
         }
-        else{
-            p.color = ghostPurple;
-            p.material = MATERIAL_REFRACTIVE;
-            p.refractiveIndex = 1.0; 
-            p.reflectivity = 1.2; 
-        }
     }
-    
+
+    selected_parts = board_data[row][col];
+
+    if (!selected_parts || selected_parts.length === 0) {
+        selected_parts = null;
+        previously_selected = null;
+        return;
+    }
+    if (selected_parts[0].color[0] > 0.5) {
+        wasLastPieceWhite = true;
+    } else {
+        wasLastPieceWhite = false;
+    }
+    const yellowish = [8.0, 8.0, 0.0]; 
+    for (let p of selected_parts) {
+        p.color = yellowish;
+        p.material = MATERIAL_REFRACTIVE;
+        p.refractiveIndex = 1.0; 
+        p.reflectivity = 1.2; 
+    }
+    previously_selected = selected_parts;
+
     uploadWorld();
 }
 
 requestAnimationFrame(render);
 
 function fallKingLeft() {
-    if (kingFalling || kingAngle >= kingTargetAngle) return; 
+    if (itemFalling || currentAngle >= TARGET_ANGLE) return; 
     
-    kingFalling = true;
+    itemFalling = true;
 
     let start = performance.now();
     const DURATION_MS = 500; 
     
-    const startAngle = kingAngle; 
+    const startAngle = currentAngle; 
 
     function animate() {
         let now = performance.now();
@@ -399,16 +417,17 @@ function fallKingLeft() {
         
         if (t > 1) t = 1;
 
-        kingAngle = startAngle + (kingTargetAngle - startAngle) * t;
+        currentAngle = startAngle + (TARGET_ANGLE - startAngle) * t;
 
         if (t < 1) {
             requestAnimationFrame(animate);
         } else {
-            kingAngle = kingTargetAngle;
-            kingFalling = false;
+            currentAngle = TARGET_ANGLE;
+            itemFalling = false;
         }
     }
     animate();
+    currentAngle = 0;
 }
 
 
@@ -624,7 +643,11 @@ function highlightSquare3D(col, row) {
 
 function removeHighlight3D() {
     if (highlightCube) {
-        highlightCube.center = [1000, -1000, 1000]; 
+        const index = world.cubes.indexOf(highlightCube);
+        if (index > -1) {
+            world.cubes.splice(index, 1);
+        }
+        highlightCube = null;
         uploadWorld();
     }
 }
@@ -640,12 +663,6 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keydown", e => {
     if (e.key === "k" || e.key === "K") {
         fallKingLeft();
-    }
-});
-
-window.addEventListener("keydown", (e) => {
-    if (e.key === "c" || e.key === "C") {
-        makeActivePartPurple();
     }
 });
 
