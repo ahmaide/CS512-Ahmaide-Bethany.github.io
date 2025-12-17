@@ -7,22 +7,22 @@ function compareCase(a, b) {
     return isUpperA === isUpperB;
 }
 
-function pawn_destinations(row, col, board, isWhite, isFirst){
+function pawn_destinations(row, col, board, isFirst){
     let destinations = [];
 
-    if(row+isWhite>=0 && row+isWhite<8 && board[row+isWhite][col]==''){
-        destinations.push([row+isWhite, col]);
-        if(row+(isWhite*2)>=0 && row+(isWhite*2)<8 && board[row+(isWhite*2)][col]=='' && isFirst)
-            destinations.push([row+(isWhite*2), col]);
+    if(row-1>=0 && board[row-1][col]==''){
+        destinations.push([row+-1, col]);
+        if(row-2>=0 && board[row-2][col]=='' && isFirst)
+            destinations.push([row-2, col]);
     }
 
-    if(row+isWhite>=0 && row+isWhite<8 && col+1<8 &&
-         !compareCase(board[row][col], board[row+isWhite][col+1]) && board[row+isWhite][col+1]!='')
-        destinations.push([row+isWhite, col+1]);
+    if(row-1>=0 && col+1<8 &&
+         !compareCase(board[row][col], board[row-1][col+1]) && board[row-1][col+1]!='')
+        destinations.push([row-1, col+1]);
 
-    if(row+isWhite>=0 && row+isWhite<8  && col-1>=0 &&
-         !compareCase(board[row][col], board[row+isWhite][col-1]) && board[row+isWhite][col-1]!='')
-        destinations.push([row+isWhite, col-1]);
+    if(row-1>=0 && col-1>=0 &&
+         !compareCase(board[row][col], board[row-1][col-1]) && board[row-1][col-1]!='')
+        destinations.push([row-1, col-1]);
 
     return destinations;
 }
@@ -166,4 +166,26 @@ function king_destinations(row, col, board){
         }
     }
     return destinations;
+}
+
+function get_destinations(row, col, board){
+    let type = board[row][col];
+    if (type.toUpperCase() == 'P'){
+        let isFirst = true;
+        if (row !=6 )
+            isFirst = false;
+        return pawn_destinations(row, col, board, isFirst);
+    }
+    else if (type.toUpperCase() == 'R')
+        return rook_destinations(row, col, board);
+    else if (type.toUpperCase() == 'N')
+        return knight_destinations(row, col, board);
+    else if (type.toUpperCase() == 'B')
+        return bishop_destinations(row, col, board);
+    else if (type.toUpperCase() == 'Q')
+        return queen_destinations(row, col, board);
+    else if (type.toUpperCase() == 'K')
+        return king_destinations(row, col, board);
+    else
+        return [];
 }

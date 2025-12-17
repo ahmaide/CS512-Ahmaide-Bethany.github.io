@@ -357,7 +357,7 @@ function render(time) {
 
 let selected_parts = null;
 let previously_selected = null;
-let currentWhite = true;
+let wasLastPieceWhite = true;
 
 function show_selected_part_yellow(row, col) {
     if (previously_selected) {
@@ -397,6 +397,24 @@ function show_selected_part_yellow(row, col) {
     previously_selected = selected_parts;
 
     uploadWorld();
+}
+
+function clear_selected(){
+    if (previously_selected) {
+        for (let p of previously_selected) {
+            p.material = MATERIAL_GLASS;
+            
+            if (wasLastPieceWhite) {
+                p.color = [0.9, 0.9, 0.9]; 
+            } else {
+                p.color = [0.15, 0.15, 0.15]; 
+            }
+            
+            p.refractiveIndex = 1.0; 
+            p.reflectivity = 1.5; 
+        }
+    }
+    previously_selected = null;
 }
 
 requestAnimationFrame(render);
@@ -613,43 +631,36 @@ function movePieceDiagonal(parts, steps, dirX, dirZ) {
     animate();
 }
 
-let highlightCube = null;
+let activeHighlights = [];
 
 function highlightSquare3D(col, row) {
-
     const centerX = BOARD_MIN_X + (col + 0.5) * BOARD_TILE_SIZE;
     const centerZ = BOARD_MIN_Z + (row + 0.5) * BOARD_TILE_SIZE;
     
-
-    const halfTile = BOARD_TILE_SIZE / 2;
-    const thickness = 0.01; 
+    const greyCube = new RTCube({
+        center: [centerX, 0.01, centerZ], 
+        size:   [BOARD_TILE_SIZE / 2, 0.01, BOARD_TILE_SIZE / 2],
+        color:  [0.0, 0.8, 0.0], 
+        material: MATERIAL_GLASS,
+        refractiveIndex: 5.0 
+    });
     
-    if (!highlightCube) {
-
-        highlightCube = new RTCube({
-            center: [centerX, 0.01, centerZ], 
-            size:   [halfTile, thickness, halfTile],
-            color:  [0.5, 0.5, 0.5], // Grey color
-            material: MATERIAL_DIFFUSE 
-        });
-        
-
-        world.add(highlightCube);
-    } else {
-        highlightCube.center = [centerX, 0.01, centerZ];
-    }
+    world.add(greyCube);
+    
+    activeHighlights.push(greyCube);
+    
     uploadWorld();
 }
 
-function removeHighlight3D() {
-    if (highlightCube) {
-        const index = world.cubes.indexOf(highlightCube);
+function clearHighlights() {
+    for (let cube of activeHighlights) {
+        const index = world.cubes.indexOf(cube);
         if (index > -1) {
             world.cubes.splice(index, 1);
         }
-        highlightCube = null;
-        uploadWorld();
     }
+    activeHighlights = [];
+    uploadWorld();
 }
 
 

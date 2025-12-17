@@ -1,6 +1,5 @@
 let board_data = []
 
-
 function boardToWorld(col, row) {
     // board tiles run from (0,0) to (8,8)
         // world center of tile = (col + 0.5, row + 0.5)

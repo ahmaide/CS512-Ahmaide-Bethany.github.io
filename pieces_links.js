@@ -19,9 +19,11 @@ const PIECE_ASSETS = {
 
 let selectedSquare = null;
 
+let destinations = [];
+
 let flipped = false;
 
-const BOARD_LAYOUT = [
+let BOARD_LAYOUT = [
     ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'], 
     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], 
     ['',  '',  '',  '',  '',  '',  '',  ''],   
@@ -32,7 +34,7 @@ const BOARD_LAYOUT = [
     ['r', 'n', 'b', 'k', 'q', 'b', 'n', 'r']  
 ];
 
-const layout_2D = [
+let layout_2D = [
     ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'], 
     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], 
     ['',  '',  '',  '',  '',  '',  '',  ''],   
@@ -172,18 +174,63 @@ function highlightSquare(col, row) {
     selectedSquare = { col, row };
 }
 
+function highlightDestinations() {
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+    const grid = container.lastElementChild;
+    const squares = grid.children;
+    for (const destanation of destinations){
+        row = destanation[0];
+        col = destanation[1];
+        const newIndex = row * 8 + col;
+        if (squares[newIndex]) {
+          squares[newIndex].style.backgroundColor = "rgba(255, 0, 0, 0.6)";
+        }
+        if(!flipped){
+            highlightSquare3D(7 - destanation[1], 7 - destanation[0]);
+        }
+        else{
+            highlightSquare3D(destanation[1], destanation[0]);
+        }
+    }
+}
+
+function clearDestinations(){
+    const container = document.getElementById("chessBoard2D");
+    if (!container) return;
+    const grid = container.lastElementChild;
+    const squares = grid.children;
+    console.log("clearing:");
+    console.log(destinations);
+    for (const destanation of destinations){
+        row = destanation[0];
+        col = destanation[1];
+        const oldIndex = row * 8 + col;
+        squares[oldIndex].style.backgroundColor = getDefaultSquareColor(col, row);
+    }
+    destinations = [];
+    clearHighlights();
+}
+
 function onSquareClick(col, row) {
-    //removeHighlight3D();
-    if(!flipped)
+    clearDestinations();
+    destinations = get_destinations(row, col, layout_2D);
+    highlightDestinations(destinations);
+    if(!flipped){
         show_selected_part_yellow(7-col, 7-row);
-    else
+    }
+    else{
         show_selected_part_yellow(col, row);
+    }
     highlightSquare(col, row);
+    console.log(`Highlighting: ${row}, ${col}`);
     const piece = BOARD_LAYOUT[row][col];
 }
 
 
 function flip_board(){
+    clear_selected();
+    clearDestinations();
     flipped = !flipped;
     //removeHighlight3D();
     const container = document.getElementById("chessBoard2D");
