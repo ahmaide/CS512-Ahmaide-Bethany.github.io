@@ -280,7 +280,7 @@ function move(col, row){
             movePieceDiagonal(old_col, old_row, new_col, new_row);
         }
         else{
-            animateFall(new_col, new_row, -1);
+            animateFall(7-new_col, 7-new_row, -1);
             movePieceDiagonal(7 - old_col, 7 - old_row, 7 - new_col, 7 - new_row);   
 
         }
@@ -291,7 +291,7 @@ function move(col, row){
             movePiece(old_col, old_row, new_col, new_row);
         }
         else{
-            animateFall(new_col, new_row, -1);
+            animateFall(7-new_col, 7-new_row, -1);
             movePiece(7 - old_col, 7 - old_row, 7 - new_col, 7 - new_row);
         }
     }
