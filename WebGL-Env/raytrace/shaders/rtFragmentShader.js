@@ -100,10 +100,10 @@ struct HitData {
 };
 
 // scene arrays
-#define MAX_SPHERES 32
-#define MAX_CUBES    67
-#define MAX_CONES    8
-#define MAX_PLANES   8
+#define MAX_SPHERES 30
+#define MAX_CUBES    75
+#define MAX_CONES    4
+#define MAX_PLANES   1
 
 uniform int u_numSpheres;
 uniform int u_numCubes;

@@ -1,3 +1,5 @@
+const { jsxs } = require("react/jsx-runtime");
+
 function compareCase(a, b) {
     if (a.toLowerCase() === a.toUpperCase() || b.toLowerCase() === b.toUpperCase()) {
         return false; 
@@ -7,22 +9,22 @@ function compareCase(a, b) {
     return isUpperA === isUpperB;
 }
 
-function pawn_destinations(row, col, board, isFirst){
+function pawn_destinations(row, col, board, isFirst, isWhite){
     let destinations = [];
 
-    if(row-1>=0 && board[row-1][col]==''){
-        destinations.push([row+-1, col]);
-        if(row-2>=0 && board[row-2][col]=='' && isFirst)
-            destinations.push([row-2, col]);
+    if(row+isWhite>=0 && row+isWhite<8 && board[row+isWhite][col]==''){
+        destinations.push([row+isWhite, col]);
+        if(row+(isWhite*2)>=0 && row+(isWhite*2)<8 && board[row+(isWhite*2)][col]=='' && isFirst)
+            destinations.push([row+(isWhite*2), col]);
     }
 
-    if(row-1>=0 && col+1<8 &&
-         !compareCase(board[row][col], board[row-1][col+1]) && board[row-1][col+1]!='')
-        destinations.push([row-1, col+1]);
+    if(row+isWhite>=0 && col+1<8 && row+isWhite<8 &&
+         !compareCase(board[row][col], board[row+isWhite][col+1]) && board[row+isWhite][col+1]!='')
+        destinations.push([row+isWhite, col+1]);
 
-    if(row-1>=0 && col-1>=0 &&
-         !compareCase(board[row][col], board[row-1][col-1]) && board[row-1][col-1]!='')
-        destinations.push([row-1, col-1]);
+    if(row+isWhite>=0 && col-1>=0 && row+isWhite<8 &&
+         !compareCase(board[row][col], board[row+isWhite][col-1]) && board[row+isWhite][col-1]!='')
+        destinations.push([row+isWhite, col-1]);
 
     return destinations;
 }
@@ -85,14 +87,17 @@ function rook_destinations(row, col, board){
 
 function knight_destinations(row, col, board){
     let destinations = [];
-    let indexs = [-2, -1, 1, 2];
+    let indexs = [-1, -2, 1, 2];
     for(let i =0; i<4 ; i++){
         for(let j = 0 ; j < 4 ; j++){
-            if(indexs[i]%2 === indexs[j]%2)
+            if(i%2 === j%2){
                 continue;
+            }
             if(row+indexs[i]<8 && row+indexs[i]>=0 && col+indexs[j]<8 && col+indexs[j]>=0 &&
-                 !compareCase(board[row][col], board[row+indexs[i]][col+indexs[j]]))
-                destinations.push([row+indexs[i], col+indexs[j]]);
+                 !compareCase(board[row][col], board[row+indexs[i]][col+indexs[j]])){
+                    destinations.push([row+indexs[i], col+indexs[j]]);
+                 }
+                
         }
     }
     return destinations;
@@ -168,13 +173,13 @@ function king_destinations(row, col, board){
     return destinations;
 }
 
-function get_destinations(row, col, board){
+function get_destinations(row, col, board, isWhite){
     let type = board[row][col];
     if (type.toUpperCase() == 'P'){
         let isFirst = true;
-        if (row !=6 )
+        if (row !=1 )
             isFirst = false;
-        return pawn_destinations(row, col, board, isFirst);
+        return pawn_destinations(row, col, board, isFirst, isWhite);
     }
     else if (type.toUpperCase() == 'R')
         return rook_destinations(row, col, board);

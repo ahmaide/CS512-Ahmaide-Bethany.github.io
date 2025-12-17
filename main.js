@@ -79,12 +79,6 @@ world.add(new RTCube({
 
 board_data = placePieces();
 
-let king_parts = board_data[4][0];
-
-let currentAngle = 0;
-let itemFalling = false;
-
-
 function uploadWorld() {
     world.upload(gl, program);
 }
@@ -150,176 +144,113 @@ function switchCameraView(duration = 1000) {
     animate();
 }
 
+let fall_original_offsets = null;
 
-function startKingFallLeft() {
-    if (itemFalling) return;
-    itemFalling = true;
-}
-
-let king_original_offsets = null;
-
-function rotateKingLeft(parts, angle, side) {
-    if (!parts || parts.length === 0) return;
+function animateFall(col, row, direction = -1) {
+    let parts = board_data[col][row];
+    if (!parts || parts.length === 0) return new Promise(r => r());
 
     const base = parts[0];
+    const side = direction; 
+    const TARGET_ANGLE = Math.PI / 2; 
+    const DURATION = 600; 
 
-    if (!king_original_offsets) {
-        king_original_offsets = parts.map(p => {
-            const data = {
-                dx: p.center[0] - base.center[0],
-                dy: p.center[1] - base.center[1],
-                dz: p.center[2] - base.center[2]
-            };
-
-            if (p.apex) {
-                data.adx = p.apex[0] - base.center[0]; 
-                data.ady = p.apex[1] - base.center[1];
-                data.adz = p.apex[2] - base.center[2];
-                data.axis = [...p.axis];
-            }
-            return data;
-        });
-    }
+    const sizeX = base.size ? base.size[0] : 0.4;
+    const sizeY = base.size ? base.size[1] : 0.01;
 
     const pivot = {
-        x: base.center[0] - side * base.size[0], 
-        y: base.center[1] - base.size[1],  
+        x: base.center[0] - side * sizeX, 
+        y: base.center[1] - sizeY,   
         z: base.center[2] 
     };
 
-    const s = Math.sin(angle);
-    const c = Math.cos(angle);
+    const initialOffsets = parts.map(p => {
+        return {
+            dx: p.center[0] - pivot.x,
+            dy: p.center[1] - pivot.y,
+            dz: p.center[2] - pivot.z,
 
-    for (let i = 0; i < parts.length; i++) {
-        const p = parts[i];
-        const o = king_original_offsets[i];
+            hasApex: !!p.apex,
+            adx: p.apex ? p.apex[0] - pivot.x : 0,
+            ady: p.apex ? p.apex[1] - pivot.y : 0,
+            adz: p.apex ? p.apex[2] - pivot.z : 0,
+            axis: p.axis ? [...p.axis] : null
+        };
+    });
 
-        const dx = (base.center[0] + o.dx) - pivot.x;
-        const dy = (base.center[1] + o.dy) - pivot.y;
-        const dz = (base.center[2] + o.dz) - pivot.z;
+    return new Promise((resolve) => {
+        const startTime = performance.now();
 
-        const nx = dx; 
-        const ny = dy * c + side * dz * s;
-        const nz = side * dy * s + dz * c;
+        function loop() {
+            const now = performance.now();
+            let t = (now - startTime) / DURATION;
+            if (t > 1) t = 1;
+            const angle = TARGET_ANGLE * t;
 
-        p.center[0] = pivot.x + nx;
-        p.center[1] = pivot.y + ny;
-        p.center[2] = pivot.z + nz;
+            const s = Math.sin(angle);
+            const c = Math.cos(angle);
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i];
+                const origin = initialOffsets[i];
+                const nx = origin.dx;
+                const ny = origin.dy * c + side * origin.dz * s;
+                const nz = side * origin.dy * s + origin.dz * c;
 
-        if (p.apex && o.adx !== undefined) {
-            const adx = (base.center[0] + o.adx) - pivot.x;
-            const ady = (base.center[1] + o.ady) - pivot.y;
-            const adz = (base.center[2] + o.adz) - pivot.z;
+                p.center[0] = pivot.x + nx;
+                p.center[1] = pivot.y + ny;
+                p.center[2] = pivot.z + nz;
+                if (origin.hasApex) {
+                    const nax = origin.adx;
+                    const nay = origin.ady * c + side * origin.adz * s;
+                    const naz = side * origin.ady * s + origin.adz * c;
 
-            const nax = adx;
-            const nay = ady * c + side * adz * s;
-            const naz = side * ady * s + adz * c;
+                    p.apex[0] = pivot.x + nax;
+                    p.apex[1] = pivot.y + nay;
+                    p.apex[2] = pivot.z + naz;
+                    const ax = origin.axis[0];
+                    const ay = origin.axis[1];
+                    const az = origin.axis[2];
 
-            p.apex[0] = pivot.x + nax;
-            p.apex[1] = pivot.y + nay;
-            p.apex[2] = pivot.z + naz;
+                    p.axis[0] = ax;
+                    p.axis[1] = ay * c + side * az * s;
+                    p.axis[2] = side * ay * s + az * c;
+                }
 
-            const ax = o.axis[0];
-            const ay = o.axis[1];
-            const az = o.axis[2];
-
-            p.axis[0] = ax;
-            p.axis[1] = ay * c + side * az * s; 
-            p.axis[2] = side * ay * s + az * c; 
-        }
-
-
-        if (p.size && p.rotation) {
-            p.rotation = [
-                1,  0,   0,
-                0,  c,  side * -s,
-                0,  side * s,   c
-            ];
-        }
-    }
-} 
-
-
-function rotateKingFront(parts, angle, side) {
-    if (!parts || parts.length === 0) return;
-
-    const base = parts[0];
-
-    if (!king_original_offsets) {
-        king_original_offsets = parts.map(p => {
-            const data = {
-                dx: p.center[0] - base.center[0],
-                dy: p.center[1] - base.center[1],
-                dz: p.center[2] - base.center[2]
-            };
-
-            if (p.apex) {
-                data.adx = p.apex[0] - base.center[0]; 
-                data.ady = p.apex[1] - base.center[1];
-                data.adz = p.apex[2] - base.center[2];
-                data.axis = [...p.axis];
+                if (p.size && p.rotation) {
+                    p.rotation = [
+                        1, 0, 0,
+                        0, c, side * -s,
+                        0, side * s, c
+                    ];
+                }
             }
-            return data;
-        });
-    }
-
-    const pivot = {
-        x: base.center[0], 
-        y: base.center[1] - base.size[1],  
-        z: base.center[2] - side * base.size[2]
-    };
-
-    const s = Math.sin(angle);
-    const c = Math.cos(angle);
-
-    for (let i = 0; i < parts.length; i++) {
-        const p = parts[i];
-        const o = king_original_offsets[i];
-
-        const dx = (base.center[0] + o.dx) - pivot.x;
-        const dy = (base.center[1] + o.dy) - pivot.y;
-        const dz = (base.center[2] + o.dz) - pivot.z;
-
-        const nx = side * dy * s + dx * c; 
-        const ny = dy * c + side * dx * s;
-        const nz = dz;
-
-        p.center[0] = pivot.x + nx;
-        p.center[1] = pivot.y + ny;
-        p.center[2] = pivot.z + nz;
-
-        if (p.apex && o.adx !== undefined) {
-            const adx = (base.center[0] + o.adx) - pivot.x;
-            const ady = (base.center[1] + o.ady) - pivot.y;
-            const adz = (base.center[2] + o.adz) - pivot.z;
-
-            const naz = adz;
-            const nay = ady * c + side * adx * s;
-            const nax = side * ady * s + adx * c;
-
-            p.apex[0] = pivot.x + nax;
-            p.apex[1] = pivot.y + nay;
-            p.apex[2] = pivot.z + naz;
-
-            const ax = o.axis[0];
-            const ay = o.axis[1];
-            const az = o.axis[2];
-
-            p.axis[2] = az;
-            p.axis[1] = ay * c + side* ax * s; 
-            p.axis[0] = side * ay * s + ax * c; 
+            
+            uploadWorld();
+            
+            if (t < 1) {
+                requestAnimationFrame(loop);
+            } else {
+                parts.forEach(p => {
+                    if (world.cubes) {
+                        const idx = world.cubes.indexOf(p);
+                        if (idx > -1) world.cubes.splice(idx, 1);
+                    }
+                    if (world.cones) {
+                        const idx = world.cones.indexOf(p);
+                        if (idx > -1) world.cones.splice(idx, 1);
+                    }
+                    if (world.spheres) {
+                        const idx = world.spheres.indexOf(p);
+                        if (idx > -1) world.spheres.splice(idx, 1);
+                    }
+                });
+                uploadWorld();
+                resolve(); 
+            }
         }
-
-
-        if (p.size && p.rotation) {
-            p.rotation = [
-                1,  0,   0,
-                0,  c,  side * -s,
-                0,  side * s,   c
-            ];
-        }
-    }
-} 
+        loop();
+    });
+}
 
 
 function render(time) {
@@ -347,7 +278,6 @@ function render(time) {
     gl.uniform1i(gl.getUniformLocation(program, "u_maxBounces"), params.maxBounces);
 
     uploadCamera();
-    rotateKingFront(king_parts, currentAngle, -1);
     uploadWorld();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -419,39 +349,12 @@ function clear_selected(){
 
 requestAnimationFrame(render);
 
-function fallKingLeft() {
-    if (itemFalling || currentAngle >= TARGET_ANGLE) return; 
-    
-    itemFalling = true;
 
-    let start = performance.now();
-    const DURATION_MS = 500; 
-    
-    const startAngle = currentAngle; 
-
-    function animate() {
-        let now = performance.now();
-        let t = (now - start) / DURATION_MS;
-        
-        if (t > 1) t = 1;
-
-        currentAngle = startAngle + (TARGET_ANGLE - startAngle) * t;
-
-        if (t < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            currentAngle = TARGET_ANGLE;
-            itemFalling = false;
-        }
-    }
-    animate();
-    currentAngle = 0;
-}
-
-
-function movePiece(parts, targetCol, targetRow) {
+function movePiece(currentCol, currentRow, targetCol, targetRow) {
+    let parts = board_data[currentCol][currentRow];
+    board_data[targetCol][targetRow] = board_data[currentCol][currentRow];
+    board_data[currentCol][currentRow] = [];
     if (!parts || parts.length === 0) return;
-
 
     const base = parts[0]; 
     const startX = base.center[0];
@@ -532,6 +435,8 @@ function movePiece(parts, targetCol, targetRow) {
         }
 
         uploadWorld(); 
+       
+        
 
         if (t < 1.0) {
             requestAnimationFrame(animate);
@@ -542,19 +447,17 @@ function movePiece(parts, targetCol, targetRow) {
 }
 
 
-function movePieceDiagonal(parts, steps, dirX, dirZ) {
+function movePieceDiagonal(currentCol, currentRow, targetCol, targetRow) {
+    let parts = board_data[currentCol][currentRow];
+    board_data[targetCol][targetRow] = board_data[currentCol][currentRow];
+    board_data[currentCol][currentRow] = [];
+
     if (!parts || parts.length === 0) return;
 
     const base = parts[0];
     const startX = base.center[0];
     const startY = base.center[1];
     const startZ = base.center[2];
-
-    const currentCol = Math.floor((startX - BOARD_MIN_X) / BOARD_TILE_SIZE);
-    const currentRow = Math.floor((startZ - BOARD_MIN_Z) / BOARD_TILE_SIZE);
-
-    const targetCol = currentCol + (steps * dirX);
-    const targetRow = currentRow + (steps * dirZ);
 
     if (targetCol < 0 || targetCol > 7 || targetRow < 0 || targetRow > 7) {
         console.log("Move out of bounds! Canceling.");
@@ -667,28 +570,6 @@ function clearHighlights() {
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         switchCameraView();
-        flip_board();
-    }
-});
-
-window.addEventListener("keydown", e => {
-    if (e.key === "k" || e.key === "K") {
-        fallKingLeft();
-    }
-});
-
-
-window.addEventListener("keydown", (e) => {
-    if (e.key === "m" || e.key === "M") {
-        movePiece(king_parts, 3, 3);
-    }
-});
-
-
-window.addEventListener("keydown", (e) => {
-
-    if (e.key === "d" || e.key === "D") {
-        movePieceDiagonal(king_parts, 3, 1, -1);
     }
 });
 

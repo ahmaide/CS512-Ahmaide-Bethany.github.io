@@ -72,6 +72,7 @@ function create2DBoard() {
             square.addEventListener("click", () => {
                 checkSquareCase(col, row);
             });
+            square.style.boxShadow = "inset 0 0 0 1px rgba(0, 0, 0, 0.5)";
             square.style.display = "flex";
             square.style.alignItems = "center";
             square.style.justifyContent = "center";
@@ -180,17 +181,17 @@ function highlightDestinations() {
     const grid = container.lastElementChild;
     const squares = grid.children;
     for (const destanation of destinations){
-        row = destanation[0];
-        col = destanation[1];
+        row = 7-destanation[0];
+        col = 7-destanation[1];
         const newIndex = row * 8 + col;
         if (squares[newIndex]) {
           squares[newIndex].style.backgroundColor = "rgba(255, 0, 0, 0.6)";
         }
         if(!flipped){
-            highlightSquare3D(7 - destanation[1], 7 - destanation[0]);
+            highlightSquare3D(destanation[1], destanation[0]);
         }
         else{
-            highlightSquare3D(destanation[1], destanation[0]);
+            highlightSquare3D(7-destanation[1], 7- destanation[0]);
         }
     }
 }
@@ -200,11 +201,9 @@ function clearDestinations(){
     if (!container) return;
     const grid = container.lastElementChild;
     const squares = grid.children;
-    console.log("clearing:");
-    console.log(destinations);
     for (const destanation of destinations){
-        row = destanation[0];
-        col = destanation[1];
+        row = 7 -destanation[0];
+        col = 7 -destanation[1];
         const oldIndex = row * 8 + col;
         squares[oldIndex].style.backgroundColor = getDefaultSquareColor(col, row);
     }
@@ -213,14 +212,16 @@ function clearDestinations(){
 }
 
 function checkSquareCase(col, row){
-     let type = layout_2D[row][col];
-     console.log(`Type is ${type}`);
-     if(type == '')
-        return;
-    if(destinations.some(sub => sub[0] === row && sub[1] === col))
-        return;
+     let type = layout_2D[7-row][7-col];
+     
+    if(destinations.some(sub => sub[0] === 7-row && sub[1] === 7-col)){
+        move(col, row);
+    }
     else{
-        if ((type != type.toUpperCase() && !flipped) || (type == type.toUpperCase() && flipped)){
+        if(type == ''){
+            return;
+        }
+        if ((type == type.toUpperCase() && !flipped) || (type != type.toUpperCase() && flipped)){
             onSquareClick(col, row);
         }
     }
@@ -228,19 +229,18 @@ function checkSquareCase(col, row){
 
 function onSquareClick(col, row) {
     clearDestinations();
-    destinations = get_destinations(row, col, layout_2D);
+    destinations = get_destinations(7-row, 7-col, layout_2D, 1);
     highlightDestinations(destinations);
-    if(!flipped){
+    if(!flipped)
         show_selected_part_yellow(7-col, 7-row);
-    }
-    else{
+    else
         show_selected_part_yellow(col, row);
-    }
+    
     highlightSquare(col, row);
-    console.log(`Highlighting: ${row}, ${col}`);
     const piece = BOARD_LAYOUT[row][col];
 }
 
+let doneFlipping = false;
 
 function flip_board(){
     clear_selected();
@@ -266,4 +266,37 @@ function flip_board(){
         }
     }
     updateBoardPieces();
+}
+
+function move(col, row){
+    doneFlipping = false;
+    let new_col = 7 - col;
+    let new_row = 7 - row;
+    let old_col = 7 - selectedSquare.col;
+    let old_row = 7- selectedSquare.row;
+    if(Math.abs(old_col-new_col) == Math.abs(new_row - old_row)){
+        if(!flipped){
+            animateFall(new_col, new_row, 1);
+            movePieceDiagonal(old_col, old_row, new_col, new_row);
+        }
+        else{
+            animateFall(new_col, new_row, -1);
+            movePieceDiagonal(7 - old_col, 7 - old_row, 7 - new_col, 7 - new_row);   
+
+        }
+    }
+    else{
+        if(!flipped){
+            animateFall(new_col, new_row, 1);
+            movePiece(old_col, old_row, new_col, new_row);
+        }
+        else{
+            animateFall(new_col, new_row, -1);
+            movePiece(7 - old_col, 7 - old_row, 7 - new_col, 7 - new_row);
+        }
+    }
+    layout_2D[7-row][7-col]= layout_2D[old_row][old_col];
+    layout_2D[old_row][old_col] = '';
+    updateBoardPieces();
+    flip_board();
 }

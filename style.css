@@ -1,33 +1,149 @@
+/* --- Global Reset & Body --- */
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #121212; /* Deep dark background */
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+h1, h2 {
+    text-align: center;
+    font-weight: 300;
+    margin: 10px 0;
+    text-shadow: 0 0 5px rgba(255,255,255,0.1);
+}
+
+h1 { color: #00e5ff;  }
+h2 { color: #aaa; font-size: 1rem; }
+
+
+.container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.canvas-container {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1); 
+}
+
+
+.ui {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 300px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+
+.ui label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ff6600; 
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
+input[type=range] {
+    -webkit-appearance: none; 
+    width: 100%;
+    background: transparent;
+    margin: 10px 0;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #333;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+/* The Thumb (Handle) */
+input[type=range]::-webkit-slider-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #00e5ff; 
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -7px; 
+    box-shadow: 0 0 10px #00e5ff; 
+    transition: transform 0.2s ease, background 0.2s;
+}
+
+
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    background: #fff;
+    box-shadow: 0 0 15px #fff;
+}
+
+
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    border: none;
+    border-radius: 50px; 
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.1s ease, box-shadow 0.2s ease, filter 0.2s;
+    margin: 5px;
+}
+
+button:hover {
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(118, 75, 162, 0.6); 
+    filter: brightness(1.2);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+.video-controls {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #444;
+}
+
 #chessBoard2D {
-    width: 500px;
-    height: 500px;
+    width: 500px !important; 
+    height: 500px !important;
     display: grid;
-    border: 5px solid #333;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
-    border: 2px solid #555;
+    border: 4px solid #444;
+    border-radius: 4px;
+    margin-top: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }
 
 .board-square {
-    width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px; 
-}
-
-.board-square.light {
-    background-color: #eeeed2;
-}
-
-.board-square.dark {
-    background-color: #769656;
-}
-
-.chess-piece-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    pointer-events: none;
 }
